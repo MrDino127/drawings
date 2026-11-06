@@ -1,0 +1,26 @@
+# Rebuilds nico.kodeko.org after every push to main, so new drawings show up on their own.
+# Needs one repository secret, SITE_DEPLOY_HOOK: the deploy hook URL from Cloudflare.
+name: Rebuild the site
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: [README.md]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ping the Cloudflare deploy hook
+        env:
+          HOOK: ${{ secrets.SITE_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::The SITE_DEPLOY_HOOK secret isn't set, so the site wasn't told to rebuild."
+            exit 1
+          fi
+          curl --fail --silent --show-error --max-time 30 -X POST "$HOOK"
